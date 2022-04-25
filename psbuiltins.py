@@ -6,6 +6,7 @@ class Stacks:
         #stack variables
         self.opstack = []  #assuming top of the stack is the end of the list
         self.dictstack = []  #assuming top of the stack is the end of the list
+        # self.scope = scoperule
         # The environment that the REPL evaluates expressions in.
         # Uncomment this dictionary in part2
         self.builtin_operators = {
@@ -34,9 +35,24 @@ class Stacks:
             "def":self.psDef,
             "if":self.psIf,
             "ifelse":self.psIfelse,
-            "for":self.psFor
+            "for":self.psFor,
+
+            "begin": self.begin,
+            "end": self.end
         }
 
+    def begin(self):
+        if (len(self.opstack) < 1):
+            print('Error: begin expects a single argument')
+        elif not isinstance(self.opstack[-1], DictConstant):
+            print('Error: no dictionary in stack')
+        else:
+            self.dictPush(self.opPop().value)
+
+    """ end operator
+        Pops the top dictionary from dictstack."""
+    def end(self):
+        self.dictPop()
     
     # Pops the top value from opstack and returns it.
     def opPop(self):
@@ -74,15 +90,24 @@ class Stacks:
             self.dictstack[-1][name] = value
 
 
-    # Searches the dictstack for a variable or function and returns its value.
-    def lookup(self, name):
-        name = '/' + name
+    def static_lookup(self, name):
+        pass
+
+    def dynamic_lookup(self, name):
         ds = self.dictstack[:]
         ds.reverse()
         for entry in ds:
             if name in entry:
                 return entry[name]
         return None
+
+
+    # Searches the dictstack for a variable or function and returns its value.
+    def lookup(self, name):
+        name = '/' + name
+        return self.dynamic_lookup(name)
+        if self.scope == 'static': return self.static_lookup(name)
+        else: return self.dynamic_lookup(name)
 
 
     # if $op1 and $op2 are numbers, add them and push the sum to the opstack.
